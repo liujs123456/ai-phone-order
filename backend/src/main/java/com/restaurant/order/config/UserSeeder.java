@@ -11,9 +11,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class UserSeeder {
 
     /**
-     * Seed the staff account on first boot. Customers don't have accounts —
-     * the customer side of the app is anonymous.
-     *   staff / staff123  → ROLE_STAFF
+     * Seed the two internal accounts on first boot. Customers (restaurant
+     * patrons) are anonymous — only the operator's people have accounts.
+     *   staff / staff123  → ROLE_STAFF  (kitchen — handles incoming orders)
+     *   admin / admin123  → ROLE_ADMIN  (UP sales — follows up demo-booking leads)
      */
     @Bean
     ApplicationRunner seedUsers(AppUserRepository repo, PasswordEncoder enc) {
@@ -25,6 +26,14 @@ public class UserSeeder {
                 s.setRole("STAFF");
                 s.setDisplayName("Kitchen Staff");
                 repo.save(s);
+            }
+            if (repo.findByUsername("admin").isEmpty()) {
+                AppUser a = new AppUser();
+                a.setUsername("admin");
+                a.setPasswordHash(enc.encode("admin123"));
+                a.setRole("ADMIN");
+                a.setDisplayName("UP Sales");
+                repo.save(a);
             }
         };
     }

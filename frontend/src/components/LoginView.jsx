@@ -23,16 +23,21 @@ export default function LoginView({ onLoggedIn, onCancel }) {
     }
   }
 
-  function quickFill() {
-    setUsername('staff');
-    setPassword('staff123');
+  function quickFill(who) {
+    if (who === 'admin') {
+      setUsername('admin');
+      setPassword('admin123');
+    } else {
+      setUsername('staff');
+      setPassword('staff123');
+    }
   }
 
   return (
     <div className="login">
       <form className="login__card" onSubmit={submit}>
-        <h2>👨‍🍳 Staff Login</h2>
-        <p className="login__sub">Kitchen dashboard access</p>
+        <h2>🔐 Internal Login</h2>
+        <p className="login__sub">Kitchen staff & UP sales access</p>
 
         <label>
           <span>Username</span>
@@ -63,8 +68,11 @@ export default function LoginView({ onLoggedIn, onCancel }) {
 
         <div className="login__hint">
           Demo:
-          <button type="button" className="link" onClick={quickFill}>
+          <button type="button" className="link" onClick={() => quickFill('staff')}>
             staff / staff123
+          </button>
+          <button type="button" className="link" onClick={() => quickFill('admin')}>
+            admin / admin123
           </button>
         </div>
 

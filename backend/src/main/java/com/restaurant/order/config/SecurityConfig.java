@@ -84,8 +84,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/orders/*").permitAll() // single order by id
                         .requestMatchers(HttpMethod.POST, "/api/demo-bookings").permitAll() // lead capture
-                        // Staff-only: list all orders / leads, change status, cancel, edit the menu.
-                        .requestMatchers(HttpMethod.GET, "/api/demo-bookings").hasRole("STAFF")
+                        // Admin (UP sales) sees lead pipeline; kitchen staff can't.
+                        .requestMatchers(HttpMethod.GET, "/api/demo-bookings").hasRole("ADMIN")
+                        // Staff (kitchen) handles orders & menu CRUD.
                         .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("STAFF")
                         .requestMatchers(HttpMethod.PUT, "/api/orders/**").hasRole("STAFF")
                         .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasRole("STAFF")

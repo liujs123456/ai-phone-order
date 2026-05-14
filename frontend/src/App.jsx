@@ -6,6 +6,7 @@ import LoginView from './components/LoginView.jsx';
 import StaffView from './components/StaffView.jsx';
 import MyOrdersView from './components/MyOrdersView.jsx';
 import BookDemoModal from './components/BookDemoModal.jsx';
+import SalesView from './components/SalesView.jsx';
 import { staffAuth } from './api/client.js';
 
 const CUSTOMER_TABS = [
@@ -67,10 +68,11 @@ export default function App() {
   }
 
   if (staffUser) {
+    const isAdmin = staffUser.role === 'ADMIN';
     return (
       <div className="app">
         <div className="app__header">
-          <h1>👨‍🍳 Kitchen Dashboard</h1>
+          <h1>{isAdmin ? '📈 Sales Dashboard' : '👨‍🍳 Kitchen Dashboard'}</h1>
           <div className="app__header-right">
             <span className="pill">{staffUser.displayName ?? staffUser.username}</span>
             <button className="logout" type="button" onClick={logoutStaff}>
@@ -78,7 +80,7 @@ export default function App() {
             </button>
           </div>
         </div>
-        <StaffView />
+        {isAdmin ? <SalesView /> : <StaffView />}
         {toast && <div className="toast">{toast}</div>}
       </div>
     );
