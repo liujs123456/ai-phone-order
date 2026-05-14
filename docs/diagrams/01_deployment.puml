@@ -1,0 +1,75 @@
+@startuml deployment
+!theme plain
+title AI Phone Order — Deployment Architecture
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 18
+skinparam ranksep 30
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+
+actor "📱 Customer\n(mobile / desktop)" as customer
+actor "👨‍🍳 Staff\n(kitchen)" as staff
+
+cloud "Google Cloud · us-west1" as gcp #E8F0FE {
+  node "Cloud Run\nai-phone-order-frontend" as fe #D2E3FC {
+    component "Nginx (Alpine)" as nginx
+    component "React + Vite SPA\n(static dist/)" as spa
+  }
+  node "Cloud Run\nai-phone-order-backend" as be #D2E3FC {
+    component "Spring Boot 3 / Java 17" as boot {
+      component "Controllers" as ctrl
+      component "Services" as svc
+      component "Repositories" as repo
+      component "Spring Security\n+ JWT filter" as sec
+    }
+  }
+  node "Cloud Build" as cb #F0F4F9
+  database "Container Registry" as cr #F0F4F9
+}
+
+cloud "Supabase · AWS us-west-1" as sb #E6F4EA {
+  database "PostgreSQL 15\n(Session Pooler:5432)" as pg {
+    folder "app_user" as t_user
+    folder "menu_item" as t_menu
+    folder "customer_order" as t_order
+    folder "order_item" as t_orderitem
+  }
+}
+
+cloud "Groq Cloud" as groq #FCE8E6 {
+  component "llama-3.3-70b-versatile\n(OpenAI-compatible API)" as llm
+}
+
+customer -down-> nginx : "HTTPS\n443"
+staff -down-> nginx : "HTTPS\n443"
+nginx -right-> spa : "serve\nindex.html"
+spa -down-> ctrl : "fetch /api/*\nBearer JWT\nCORS"
+
+ctrl --> svc
+svc --> repo
+repo -down-> pg : "JDBC over TLS\nuser: postgres.xxx"
+sec -up- ctrl
+
+svc -right-> llm : "POST /v1/chat/completions\ntool: search_menu"
+
+cb -[#999,dashed]up-> cr : "build & push"
+cr -[#999,dashed]up-> be : "pull image"
+cr -[#999,dashed]up-> fe : "pull image"
+
+note bottom of llm
+  Function calling loop:
+  1. user msg → model
+  2. model emits tool_call
+  3. backend runs search_menu()
+  4. JSON results → model
+  5. model returns final text
+end note
+
+note bottom of pg
+  Seeded at first boot:
+  • 2 users (BCrypt)
+  • 12 menu items
+end note
+
+@enduml

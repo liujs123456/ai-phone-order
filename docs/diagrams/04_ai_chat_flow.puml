@@ -1,0 +1,61 @@
+@startuml ai_chat_flow
+!theme plain
+title AI Chat with Tool Calling (Groq function-calling loop)
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+
+actor Customer
+participant "ChatView\n(React)" as ui
+participant "ChatController" as ctrl
+participant "AiChatService" as ai
+participant "Groq\n(llama-3.3-70b)" as llm
+participant "MenuService" as menu
+database "Postgres\nmenu_item" as db
+
+Customer -> ui : "推荐一道辣的菜"
+ui -> ctrl : POST /api/chat\n[{role:user, content:"推荐..."}]
+ctrl -> ai : chat(messages)
+
+ai -> ai : prepend system prompt\n+ register tool "search_menu"
+
+== Round 1: model decides to use the tool ==
+ai -> llm : POST /v1/chat/completions\n{messages, tools, tool_choice:auto}
+llm --> ai : choices[0]:\n  message.tool_calls:[\n    {name:"search_menu",\n     arguments:{query:"spicy"}}\n  ]\n  finish_reason:"tool_calls"
+
+ai -> ai : append assistant message\nto conversation
+ai -> menu : search("spicy")
+menu -> db : SELECT * WHERE\n  name LIKE %spicy% OR\n  description LIKE %spicy% OR\n  category LIKE %spicy%
+db --> menu : [MapoTofu, HotAndSour, DanDan]
+menu --> ai : List<MenuItem>
+ai -> ai : append tool result\n{role:"tool", content:JSON}
+
+== Round 2: model produces final text ==
+ai -> llm : POST /v1/chat/completions\n(now with tool result in history)
+llm --> ai : message.content:\n"We have three spicy dishes:\nMapo Tofu $12.95, Hot and\nSour Soup $6.95, Dan Dan\nNoodles $13.95..."\nfinish_reason:"stop"
+
+ai --> ctrl : ChatResponse(reply, suggestedItems)
+ctrl --> ui : 200 {reply, items}
+ui --> Customer : render bubble + clickable chips
+
+== Fallback: legacy <function=...> format ==
+note right of llm
+  llama 3.3 sometimes emits the
+  legacy syntax instead of JSON:
+
+  <function=search_menu
+   {"query": "spicy"}>
+
+  Groq rejects this as
+  tool_use_failed (400).
+end note
+
+llm --> ai : 400 tool_use_failed\nfailed_generation: "<function=...>"
+ai -> ai : recoverFromToolUseFailure()\nregex: <function=(\\w+)\\s*(\\{.*?\\})\\s*(?:</function>|>)
+ai -> ai : synthesize choices[0] with\nproper tool_calls block
+note right of ai
+  loop continues as if model
+  returned valid JSON
+end note
+
+@enduml

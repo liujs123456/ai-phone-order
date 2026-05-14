@@ -1,0 +1,51 @@
+@startuml login_flow
+!theme plain
+title Login + Role-Based Routing (JWT, stateless)
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+
+actor User
+participant "Browser\n(React SPA)" as ui
+participant "JwtAuthFilter" as filter
+participant "AuthController" as ctrl
+participant "AuthService" as svc
+participant "BCryptPasswordEncoder" as bcrypt
+participant "JwtService" as jwt
+database "Postgres\napp_user" as db
+
+== Sign in ==
+User -> ui : enter username/password
+ui -> filter : POST /api/auth/login\n(no Authorization header)
+filter -> filter : header missing →\nleave SecurityContext empty
+filter -> ctrl : permitAll() — passes through
+ctrl -> svc : login(req)
+svc -> db : findByUsername("customer")
+db --> svc : AppUser{passwordHash, role}
+svc -> bcrypt : matches(rawPw, hash)
+bcrypt --> svc : true
+svc -> jwt : generate(user)
+jwt --> svc : "eyJhbGciOiJIUzM4NCJ9..."
+svc --> ctrl : LoginResponse(token, role)
+ctrl --> ui : 200 {token, role: "CUSTOMER"}
+
+ui -> ui : localStorage.setItem("token", ...)\nrender CustomerApp vs StaffApp
+
+== Subsequent authenticated call ==
+User -> ui : click "Send" in chat
+ui -> filter : POST /api/chat\nAuthorization: Bearer <jwt>
+filter -> jwt : parse(token)
+jwt --> filter : Claims{sub, role, exp}
+filter -> filter : SecurityContextHolder.set(\n  UsernamePasswordAuthToken(\n    "customer", ROLE_CUSTOMER))
+filter -> ctrl : authenticated → SecurityConfig\nrole rules allow
+ctrl --> ui : 200 (chat reply)
+
+== Role-gated call (staff only) ==
+User -> ui : (customer) try to view all orders
+ui -> filter : GET /api/orders\nAuthorization: Bearer <customer-jwt>
+filter -> jwt : parse(token)
+jwt --> filter : role = CUSTOMER
+filter -> ctrl : SecurityConfig.hasRole("STAFF")
+ctrl --> ui : 403 Forbidden
+
+@enduml

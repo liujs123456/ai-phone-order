@@ -1,0 +1,41 @@
+@startuml order_lifecycle
+!theme plain
+title Order Lifecycle (Customer places, Staff cooks, soft-delete on cancel)
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+
+state "PENDING" as pending : initial state\non POST /api/orders
+state "COOKING" as cooking : staff advances
+state "READY" as ready : ready for pickup
+state "COMPLETED" as completed : terminal — cannot cancel
+state "CANCELLED" as cancelled : soft-delete\n(record kept for audit)
+
+[*] --> pending : Customer creates order\n(POST, role: CUSTOMER+)
+
+pending --> cooking : PUT /api/orders/{id}/status\n{"status":"COOKING"}\n(role: STAFF)
+cooking --> ready : PUT .../status COOKING→READY\n(role: STAFF)
+ready --> completed : PUT .../status READY→COMPLETED\n(role: STAFF)
+
+pending --> cancelled : DELETE /api/orders/{id}\n(role: STAFF)
+cooking --> cancelled : DELETE /api/orders/{id}\n(role: STAFF)
+ready --> cancelled : DELETE /api/orders/{id}\n(role: STAFF)
+
+completed --> [*]
+cancelled --> [*]
+
+note right of cancelled
+  Soft delete only:
+  row stays in customer_order,
+  just sets status='CANCELLED'.
+  Preserves audit trail.
+end note
+
+note bottom of completed
+  Cannot transition from
+  COMPLETED — OrderService
+  throws IllegalStateException
+  → GlobalExceptionHandler
+  returns HTTP 409 Conflict.
+end note
+
+@enduml

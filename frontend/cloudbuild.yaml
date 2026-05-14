@@ -1,0 +1,49 @@
+# Cloud Build pipeline for the frontend.
+# Builds the image with VITE_API_BASE baked in, pushes to Container Registry,
+# then rolls out to Cloud Run.
+#
+# Run with:
+#   gcloud builds submit \
+#     --config=cloudbuild.yaml \
+#     --substitutions=_API_BASE=https://YOUR-BACKEND-URL.run.app,_REGION=us-west1
+substitutions:
+  _SERVICE: ai-phone-order-frontend
+  _REGION: us-west1
+  _API_BASE: ""   # required — pass via --substitutions
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg
+      - VITE_API_BASE=${_API_BASE}
+      - -t
+      - gcr.io/$PROJECT_ID/${_SERVICE}
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - gcr.io/$PROJECT_ID/${_SERVICE}
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=gcr.io/$PROJECT_ID/${_SERVICE}
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+      - --memory=256Mi
+      - --cpu=1
+      - --min-instances=0
+      - --max-instances=3
+
+images:
+  - gcr.io/$PROJECT_ID/${_SERVICE}
+
+options:
+  logging: CLOUD_LOGGING_ONLY

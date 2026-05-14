@@ -1,0 +1,25 @@
+spring:
+  profiles:
+    active: dev
+  jpa:
+    open-in-view: false
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-change-me-in-production-please-32-bytes}
+    ttl-minutes: 240
+
+groq:
+  api-key: ${GROQ_API_KEY:}
+  base-url: https://api.groq.com/openai/v1
+  model: ${GROQ_MODEL:llama-3.3-70b-versatile}
+  max-tokens: 1024

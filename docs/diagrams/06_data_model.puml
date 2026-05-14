@@ -1,0 +1,66 @@
+@startuml data_model
+!theme plain
+title Data Model (Supabase Postgres, JPA-managed)
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+hide circle
+
+entity "app_user" as user {
+  * id : BIGSERIAL <<PK>>
+  --
+  * username : VARCHAR <<UNIQUE>>
+  * password_hash : VARCHAR (BCrypt)
+  * role : VARCHAR (CUSTOMER | STAFF)
+    display_name : VARCHAR
+}
+
+entity "menu_item" as menu {
+  * id : BIGSERIAL <<PK>>
+  --
+  * name : VARCHAR
+    name_cn : VARCHAR
+    description : VARCHAR(500)
+  * price : NUMERIC(10,2)
+  * category : VARCHAR
+  * is_available : BOOLEAN
+    spicy_level : INTEGER (0-3)
+}
+
+entity "customer_order" as ord {
+  * id : BIGSERIAL <<PK>>
+  --
+    customer_phone : VARCHAR
+    customer_name : VARCHAR
+  * status : VARCHAR
+  * total_price : NUMERIC(10,2)
+  * created_at : TIMESTAMP
+}
+
+entity "order_item" as oi {
+  * id : BIGSERIAL <<PK>>
+  --
+  * order_id : BIGINT <<FK>>
+  * menu_item_id : BIGINT <<FK>>
+  * quantity : INTEGER
+  * unit_price : NUMERIC(10,2)
+    note : VARCHAR(300)
+}
+
+ord ||--o{ oi : "1 order has N items\nCASCADE ALL"
+menu ||--o{ oi : "1 dish in N order lines"
+
+note bottom of user
+  Seeded by UserSeeder on first boot:
+  • customer / customer123 → CUSTOMER
+  • staff    / staff123    → STAFF
+  Passwords hashed with BCrypt
+  (10 rounds).
+end note
+
+note bottom of menu
+  Seeded by MenuSeeder on first boot
+  if table is empty (idempotent).
+  12 dishes across 9 categories.
+end note
+
+@enduml

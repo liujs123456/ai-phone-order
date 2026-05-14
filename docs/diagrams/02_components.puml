@@ -1,0 +1,90 @@
+@startuml components
+!theme plain
+title AI Phone Order — Backend Component Layers
+skinparam linetype ortho
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+skinparam componentStyle rectangle
+
+package "🌐 Frontend (React/Vite)" as fe #D2E3FC {
+  [LoginView] as login
+  [ChatView] as chat
+  [MenuView] as menu
+  [CartView] as cart
+  [StaffView] as staffui
+  [api/client.js\n(fetch + token + 401 handler)] as client
+}
+
+package "🟢 HTTP Layer (Spring MVC)" as http #FFF2CC {
+  [AuthController\n/api/auth/login] as authctl
+  [MenuController\n/api/menu/**] as menuctl
+  [OrderController\n/api/orders/**] as orderctl
+  [ChatController\n/api/chat] as chatctl
+  [GlobalExceptionHandler] as gex
+}
+
+package "🔒 Security" as security #FCE8E6 {
+  [JwtAuthFilter] as jwtfilter
+  [SecurityConfig\n(CORS + role rules)] as seccfg
+  [JwtService\nHS384 sign/verify] as jwt
+}
+
+package "🧠 Service Layer" as svclayer #E8F5E9 {
+  [AuthService\n+ BCrypt verify] as authsvc
+  [MenuService\n@Transactional] as menusvc
+  [OrderService\n+ state machine] as ordersvc
+  [AiChatService\n+ tool-call loop\n+ legacy regex recovery] as aisvc
+}
+
+package "💾 Repository Layer (Spring Data JPA)" as repolayer #E0F7FA {
+  [AppUserRepository] as userrepo
+  [MenuItemRepository\n+ search() JPQL] as menurepo
+  [CustomerOrderRepository] as orderrepo
+}
+
+package "🌱 Bootstrap" as boot #F3E5F5 {
+  [UserSeeder\n(customer, staff)] as useed
+  [MenuSeeder\n(12 dishes)] as mseed
+}
+
+database "PostgreSQL\n(Supabase)" as db
+cloud "Groq API" as groq
+
+login --> client
+chat --> client
+menu --> client
+cart --> client
+staffui --> client
+
+client --> jwtfilter : "Bearer <jwt>"
+jwtfilter --> seccfg
+jwtfilter --> jwt
+seccfg --> authctl
+seccfg --> menuctl
+seccfg --> orderctl
+seccfg --> chatctl
+
+authctl --> authsvc
+menuctl --> menusvc
+orderctl --> ordersvc
+chatctl --> aisvc
+
+authsvc --> userrepo
+authsvc --> jwt
+menusvc --> menurepo
+ordersvc --> orderrepo
+ordersvc --> menurepo
+aisvc --> menusvc
+aisvc --> groq : "tool calling"
+
+userrepo --> db
+menurepo --> db
+orderrepo --> db
+
+useed -down-> userrepo
+mseed -down-> menurepo
+
+authsvc ..> gex : "BadCredentials → 401"
+ordersvc ..> gex : "IllegalState → 409"
+
+@enduml
