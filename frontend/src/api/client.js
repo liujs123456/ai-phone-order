@@ -86,6 +86,12 @@ export const api = {
     request('/api/orders', { method: 'POST', body: JSON.stringify(payload) }),
   getOrder: (id) => request(`/api/orders/${id}`),
 
+  submitDemoBooking: (payload) =>
+    request('/api/demo-bookings', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
   // Staff-only
   staffLogin: (username, password) =>
     request('/api/auth/login', {
@@ -101,4 +107,6 @@ export const api = {
     ),
   cancelOrder: (id) =>
     request(`/api/orders/${id}`, { method: 'DELETE' }, { withStaffAuth: true }),
+  listDemoBookings: () =>
+    request('/api/demo-bookings', {}, { withStaffAuth: true }),
 };

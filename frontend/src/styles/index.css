@@ -109,6 +109,193 @@ textarea {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.app__header .book-demo-cta {
+  background: var(--accent);
+  border: none;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.app__header .book-demo-cta:hover {
+  filter: brightness(0.95);
+}
+
+/* On narrow phones, shorten the CTA so it doesn't crowd the staff link */
+@media (max-width: 380px) {
+  .app__header .book-demo-cta::before {
+    content: 'Book Demo';
+  }
+  .app__header .book-demo-cta {
+    font-size: 0;
+    padding: 0.35rem 0.6rem;
+  }
+  .app__header .book-demo-cta::before {
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+}
+
+/* ===== Modal ===== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 30, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.modal-card {
+  position: relative;
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 1.4rem 1.2rem 1.1rem;
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(20, 20, 30, 0.25);
+  animation: lift 0.18s ease-out;
+}
+
+.modal-card h2 {
+  margin: 0 0 0.3rem;
+  font-size: 1.2rem;
+}
+
+.modal-card__sub {
+  margin: 0 0 0.9rem;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+
+.modal-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.modal-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.modal-card label em {
+  color: #98a0aa;
+  font-style: normal;
+}
+
+.modal-card input,
+.modal-card textarea {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+  background: #fafaf7;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.modal-card input:focus,
+.modal-card textarea:focus {
+  border-color: var(--primary);
+  background: #fff;
+}
+
+.modal-card textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.modal-card .cta {
+  margin-top: 0.3rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.modal-card .cta:disabled {
+  background: #d4a8a2;
+  cursor: progress;
+}
+
+.modal-card__close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.modal-card__close:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.modal-card__success {
+  text-align: center;
+  padding: 0.5rem 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.modal-card__success h2 {
+  margin: 0;
+}
+
+.modal-card__success p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes lift {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Staff sub-tabs ===== */
+.staff-tabs {
+  border-bottom: 1px solid var(--border);
+}
+
+.staff-tabs .badge {
+  background: var(--ink-soft);
+}
+
+.kitchen-card__items .muted {
+  color: #98a0aa;
+  font-size: 0.78rem;
+}
+
 .my-orders {
   display: flex;
   flex-direction: column;

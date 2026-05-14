@@ -5,6 +5,7 @@ import CartView from './components/CartView.jsx';
 import LoginView from './components/LoginView.jsx';
 import StaffView from './components/StaffView.jsx';
 import MyOrdersView from './components/MyOrdersView.jsx';
+import BookDemoModal from './components/BookDemoModal.jsx';
 import { staffAuth } from './api/client.js';
 
 const CUSTOMER_TABS = [
@@ -17,6 +18,7 @@ const CUSTOMER_TABS = [
 export default function App() {
   const [staffUser, setStaffUser] = useState(() => staffAuth.getUser());
   const [showLogin, setShowLogin] = useState(false);
+  const [showBookDemo, setShowBookDemo] = useState(false);
   const [tab, setTab] = useState('chat');
   const [cart, setCart] = useState([]);
   const [toast, setToast] = useState(null);
@@ -91,6 +93,13 @@ export default function App() {
         <h1>🍜 AI Phone Order</h1>
         <div className="app__header-right">
           <button
+            className="book-demo-cta"
+            type="button"
+            onClick={() => setShowBookDemo(true)}
+          >
+            Book a Free Demo
+          </button>
+          <button
             className="staff-link"
             type="button"
             onClick={() => setShowLogin(true)}
@@ -133,6 +142,7 @@ export default function App() {
       )}
       {tab === 'orders' && <MyOrdersView />}
 
+      {showBookDemo && <BookDemoModal onClose={() => setShowBookDemo(false)} />}
       {toast && <div className="toast">{toast}</div>}
     </div>
   );
